@@ -1,0 +1,12 @@
+{
+  "name": "novalxp-bot-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "smoke": "node src/smoke-test.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.883.0"
+  }
+}
