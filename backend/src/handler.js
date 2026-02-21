@@ -6,8 +6,9 @@ const { classifyIntent } = require('./intent');
 const { routeModel } = require('./routing');
 const { makeError, toHttpStatus } = require('./errors');
 const { config } = require('./config');
-const { retrieveLocal } = require('./retrieval');
+const { retrieveContext } = require('./retrieval');
 const { converseWithBedrock } = require('./bedrock');
+const { authorizeRequest } = require('./auth');
 
 function response(statusCode, body) {
   return {
@@ -34,11 +35,12 @@ function intentToRetrievalHint(intent) {
   return '';
 }
 
-async function retrieveContext(payload, intent) {
-  return retrieveLocal({
+async function retrieveForIntent(payload, intent) {
+  return retrieveContext({
     queryText: payload.query.text,
     intentHint: intentToRetrievalHint(intent),
-    corpusPath: config.retrievalCorpusPath,
+    intent,
+    config,
     topK: 3,
   });
 }
@@ -108,6 +110,14 @@ async function handler(event) {
   const started = performance.now();
 
   try {
+    const authError = authorizeRequest(event && event.headers, config);
+    if (authError) {
+      return response(toHttpStatus(authError.code), {
+        request_id: 'unknown',
+        error: authError,
+      });
+    }
+
     const payload = typeof event.body === 'string' ? JSON.parse(event.body) : (event.body || event);
     const validationError = validateRequest(payload);
 
@@ -120,7 +130,7 @@ async function handler(event) {
 
     const intent = classifyIntent(payload.query.text);
     const modelId = routeModel(intent);
-    const citations = await retrieveContext(payload, intent);
+    const citations = await retrieveForIntent(payload, intent);
 
     if (shouldRequireGrounding(intent) && citations.length < config.retrievalMinCitations) {
       const err = makeError('RETRIEVAL_UNAVAILABLE', 'No retrieval context available for grounded response.', true);

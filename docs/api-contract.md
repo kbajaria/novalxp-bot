@@ -10,6 +10,7 @@ Define the request/response contract between Moodle (NovaLXP plugin/block) and t
 - Method: `POST`
 - Path: `/v1/chat`
 - Content type: `application/json`
+- Auth: `Authorization: Bearer <api_token>` (required when backend auth is enabled)
 
 ## Request Schema
 ```json

@@ -3,7 +3,11 @@
 const { handler } = require('./handler');
 
 async function run() {
+  const token = process.env.API_TOKEN || 'local-dev-key';
   const event = {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({
       request_id: 'req-001',
       tenant_id: 'novalxp',

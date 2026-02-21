@@ -19,8 +19,16 @@ const config = {
   fallbackModelId: process.env.MODEL_FALLBACK || 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
   maxTokensDefault: Number(process.env.MAX_OUTPUT_TOKENS_DEFAULT || 600),
   useBedrock: boolFromEnv('USE_BEDROCK', false),
+  apiAuthEnabled: boolFromEnv('API_AUTH_ENABLED', false),
+  apiKeys: (process.env.API_KEYS || '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean),
   retrievalMinCitations: Number(process.env.RETRIEVAL_MIN_CITATIONS || 1),
+  retrievalProvider: process.env.RETRIEVAL_PROVIDER || 'local',
   retrievalCorpusPath: process.env.RETRIEVAL_CORPUS_PATH || '/Users/kamilabajaria/Projects/NovaLXP-Bot/backend/data/corpus.json',
+  retrievalCatalogApiUrl: process.env.RETRIEVAL_CATALOG_API_URL || '',
+  retrievalCatalogApiToken: process.env.RETRIEVAL_CATALOG_API_TOKEN || '',
 };
 
 module.exports = {

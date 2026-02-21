@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('node:fs');
+const { makeError } = require('./errors');
 
 function tokenize(value) {
   return String(value || '')
@@ -35,7 +36,7 @@ function retrieveLocal({ queryText, intentHint, corpusPath, topK = 3 }) {
   const corpus = loadCorpus(corpusPath);
   const queryTokens = tokenize(queryText);
 
-  const ranked = corpus
+  return corpus
     .map((doc) => ({ doc, score: scoreDoc(queryTokens, doc, intentHint) }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -46,10 +47,62 @@ function retrieveLocal({ queryText, intentHint, corpusPath, topK = 3 }) {
       url: item.doc.url,
       snippet: item.doc.snippet,
     }));
+}
 
-  return ranked;
+async function retrieveFromCatalogApi({ queryText, intent, topK = 3, config }) {
+  if (!config.retrievalCatalogApiUrl) {
+    throw makeError('RETRIEVAL_UNAVAILABLE', 'RETRIEVAL_CATALOG_API_URL is not configured.', true);
+  }
+
+  const body = {
+    query: queryText,
+    intent,
+    top_k: topK,
+  };
+
+  const headers = { 'content-type': 'application/json' };
+  if (config.retrievalCatalogApiToken) {
+    headers.authorization = `Bearer ${config.retrievalCatalogApiToken}`;
+  }
+
+  const res = await fetch(config.retrievalCatalogApiUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw makeError('RETRIEVAL_UNAVAILABLE', `Catalog API returned ${res.status}.`, true);
+  }
+
+  const parsed = await res.json();
+  const items = Array.isArray(parsed.citations) ? parsed.citations : [];
+
+  return items.slice(0, topK).map((c, idx) => ({
+    source_id: c.source_id || `catalog_${idx + 1}`,
+    title: c.title || 'Catalog Source',
+    url: c.url || '',
+    snippet: c.snippet || '',
+  }));
+}
+
+async function retrieveContext({ queryText, intentHint, intent, config, topK = 3 }) {
+  if (config.retrievalProvider === 'catalog_api') {
+    return retrieveFromCatalogApi({ queryText, intent, topK, config });
+  }
+
+  if (config.retrievalProvider === 'opensearch') {
+    throw makeError('RETRIEVAL_UNAVAILABLE', 'OpenSearch provider is not wired yet.', true);
+  }
+
+  return retrieveLocal({
+    queryText,
+    intentHint,
+    corpusPath: config.retrievalCorpusPath,
+    topK,
+  });
 }
 
 module.exports = {
-  retrieveLocal,
+  retrieveContext,
 };
