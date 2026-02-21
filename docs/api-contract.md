@@ -115,6 +115,7 @@ Note: if the account requires inference profile IDs, use the corresponding `eu-w
 - If fewer than 2 relevant chunks are retrieved, respond with a clarifying question.
 - Recommendation/explainer answers must include at least 1 citation.
 - Citations must point to Moodle/catalog content only.
+- Retrieval source options currently supported in backend config: `local`, `catalog_api`, `moodle_ws` (`opensearch` placeholder).
 
 ## Error Model
 ### HTTP Status + Error Body

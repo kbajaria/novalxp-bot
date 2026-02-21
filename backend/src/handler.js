@@ -40,6 +40,7 @@ async function retrieveForIntent(payload, intent) {
     queryText: payload.query.text,
     intentHint: intentToRetrievalHint(intent),
     intent,
+    context: payload.context,
     config,
     topK: 3,
   });

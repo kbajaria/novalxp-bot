@@ -18,6 +18,8 @@ Lambda-style `/v1/chat` orchestrator implementation.
 - `RETRIEVAL_CORPUS_PATH` (default `/Users/kamilabajaria/Projects/NovaLXP-Bot/backend/data/corpus.json`)
 - `RETRIEVAL_CATALOG_API_URL` (used when provider is `catalog_api`)
 - `RETRIEVAL_CATALOG_API_TOKEN` (optional bearer token for catalog API)
+- `RETRIEVAL_MOODLE_BASE_URL` (used when provider is `moodle_ws`, example `https://learn.novalxp.co.uk`)
+- `RETRIEVAL_MOODLE_TOKEN` (Moodle web service token for retrieval functions)
 
 ## Local Smoke Test
 ```bash
@@ -40,6 +42,16 @@ AWS_REGION=eu-west-2 USE_BEDROCK=true node src/smoke-test.js
 AWS_REGION=eu-west-2 \
 API_AUTH_ENABLED=true \
 API_KEYS=local-dev-key \
+USE_BEDROCK=false \
+node src/smoke-test.js
+```
+
+## Moodle WS Retrieval Example
+```bash
+AWS_REGION=eu-west-2 \
+RETRIEVAL_PROVIDER=moodle_ws \
+RETRIEVAL_MOODLE_BASE_URL=https://learn.novalxp.co.uk \
+RETRIEVAL_MOODLE_TOKEN=REPLACE_WITH_NEW_TOKEN \
 USE_BEDROCK=false \
 node src/smoke-test.js
 ```

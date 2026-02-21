@@ -29,6 +29,8 @@ const config = {
   retrievalCorpusPath: process.env.RETRIEVAL_CORPUS_PATH || '/Users/kamilabajaria/Projects/NovaLXP-Bot/backend/data/corpus.json',
   retrievalCatalogApiUrl: process.env.RETRIEVAL_CATALOG_API_URL || '',
   retrievalCatalogApiToken: process.env.RETRIEVAL_CATALOG_API_TOKEN || '',
+  retrievalMoodleBaseUrl: process.env.RETRIEVAL_MOODLE_BASE_URL || '',
+  retrievalMoodleToken: process.env.RETRIEVAL_MOODLE_TOKEN || '',
 };
 
 module.exports = {
