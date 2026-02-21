@@ -28,7 +28,7 @@ function extractText(output) {
 
 function intentInstruction(intent) {
   if (intent === 'course_recommendation') {
-    return 'For course recommendations: always provide 2-3 concrete course suggestions from retrieved context first, each with one short reason. Ask a follow-up question only after giving recommendations.';
+    return 'For course recommendations: always provide 2-3 concrete course suggestions from retrieved context first, each with one short reason. Do not ask a follow-up question unless the user explicitly asks for more options or there are fewer than 2 relevant retrieved items.';
   }
   if (intent === 'site_navigation') {
     return 'For site navigation: provide exact click-path steps when possible.';
