@@ -1,6 +1,6 @@
 # Runtime Matrix (eu-west-2)
 
-Last updated: 2026-02-21
+Last updated: 2026-02-21 (validated)
 
 This file freezes runtime-validated model/profile IDs for production in `eu-west-2`.
 
@@ -54,9 +54,9 @@ aws bedrock-runtime invoke-model \
 ## Production Runtime Matrix
 | Capability | Primary ID | Fallback ID | eu-west-2 Invoke Verified | Notes |
 |---|---|---|---|---|
-| site_navigation | TBD | TBD | No | Set after CLI validation |
-| course_recommendation | TBD | TBD | No | Set after CLI validation |
-| section_explainer | TBD | TBD | No | Set after CLI validation |
+| site_navigation | amazon.nova-lite-v1:0 | us.anthropic.claude-haiku-4-5-20251001-v1:0 | TBD | Validate converse call in eu-west-2 |
+| course_recommendation | amazon.nova-pro-v1:0 | us.anthropic.claude-haiku-4-5-20251001-v1:0 | Yes | Verified via backend smoke test on 2026-02-21 |
+| section_explainer | amazon.nova-pro-v1:0 | us.anthropic.claude-haiku-4-5-20251001-v1:0 | TBD | Validate converse call in eu-west-2 |
 | embeddings | amazon.titan-embed-text-v2:0 | N/A | TBD | Verify output shape + dimensions |
 
 ## Go-Live Rule
