@@ -4,3 +4,4 @@ Planning and implementation workspace for the AWS-based NovaLXP Moodle 5.1 assis
 
 ## Current Architecture Notes
 - `docs/novalxp-bot-architecture-notes.md`
+- `docs/api-contract.md`
