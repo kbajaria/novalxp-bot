@@ -142,7 +142,74 @@ async function callMoodleWs(config, wsfunction, params) {
   return parsed;
 }
 
-async function retrieveFromMoodleWs({ queryText, intent, context, topK = 3, config }) {
+async function getEnrolledCourseMap(config, userId) {
+  const id = Number(userId);
+  if (!id) {
+    return new Map();
+  }
+  try {
+    const enrolled = await callMoodleWs(config, 'core_enrol_get_users_courses', { userid: id });
+    const map = new Map();
+    for (const c of Array.isArray(enrolled) ? enrolled : []) {
+      if (c && c.id) {
+        map.set(Number(c.id), true);
+      }
+    }
+    return map;
+  } catch (_err) {
+    return new Map();
+  }
+}
+
+async function getCompletionStatusMap(config, userId, courseIds) {
+  const id = Number(userId);
+  if (!id) {
+    return new Map();
+  }
+
+  const map = new Map();
+  const unique = [...new Set(courseIds.map(Number).filter(Boolean))].slice(0, 20);
+
+  for (const courseId of unique) {
+    try {
+      const status = await callMoodleWs(config, 'core_completion_get_course_completion_status', {
+        userid: id,
+        courseid: courseId,
+      });
+      const completed = Boolean(
+        status &&
+        status.completionstatus &&
+        (status.completionstatus.completed || status.completionstatus.complete)
+      );
+      map.set(courseId, completed);
+    } catch (_err) {
+      // Function may be unavailable or not permitted; leave unknown.
+    }
+  }
+  return map;
+}
+
+function scoreCourseRecommendation(queryTokens, course, enrolledMap, completionMap) {
+  const summary = stripHtml(course.summary || '');
+  const title = stripHtml(course.fullname || course.displayname || course.shortname || 'Course');
+  let score = scoreText(queryTokens, `${title} ${summary}`);
+
+  const courseId = Number(course.id);
+  const enrolled = enrolledMap.get(courseId) === true;
+  const completed = completionMap.has(courseId) ? completionMap.get(courseId) : null;
+
+  if (enrolled && completed === false) {
+    score += 4;
+  } else if (enrolled && completed === true) {
+    score -= 5;
+  } else if (!enrolled) {
+    score += 1;
+  }
+
+  return score;
+}
+
+async function retrieveFromMoodleWs({ queryText, intent, context, user, topK = 3, config }) {
   const queryTokens = tokenize(queryText);
   const citations = [];
 
@@ -162,14 +229,25 @@ async function retrieveFromMoodleWs({ queryText, intent, context, topK = 3, conf
       ? search.courses
       : await callMoodleWs(config, 'core_course_get_courses', {});
 
-    const ranked = courses
-      .filter((c) => c && c.id && Number(c.id) > 1 && c.visible !== 0)
+    const filtered = courses
+      .filter((c) => c && c.id && Number(c.id) > 1 && c.visible !== 0 && c.format !== 'site');
+
+    const enrolledMap = intent === 'course_recommendation'
+      ? await getEnrolledCourseMap(config, user && user.id)
+      : new Map();
+    const completionMap = intent === 'course_recommendation'
+      ? await getCompletionStatusMap(config, user && user.id, filtered.map((c) => c.id))
+      : new Map();
+
+    const ranked = filtered
       .map((c) => {
         const summary = stripHtml(c.summary || '');
         const title = stripHtml(c.fullname || c.displayname || c.shortname || 'Course');
-        const text = `${title} ${summary}`;
+        const score = intent === 'course_recommendation'
+          ? scoreCourseRecommendation(queryTokens, c, enrolledMap, completionMap)
+          : scoreText(queryTokens, `${title} ${summary}`);
         return {
-          score: scoreText(queryTokens, text),
+          score,
           item: {
             source_id: `course_${c.id}`,
             title,
@@ -226,13 +304,13 @@ async function retrieveFromMoodleWs({ queryText, intent, context, topK = 3, conf
   return dedup.slice(0, topK);
 }
 
-async function retrieveContext({ queryText, intentHint, intent, context, config, topK = 3 }) {
+async function retrieveContext({ queryText, intentHint, intent, context, user, config, topK = 3 }) {
   if (config.retrievalProvider === 'catalog_api') {
     return retrieveFromCatalogApi({ queryText, intent, topK, config });
   }
 
   if (config.retrievalProvider === 'moodle_ws') {
-    return retrieveFromMoodleWs({ queryText, intent, context, topK, config });
+    return retrieveFromMoodleWs({ queryText, intent, context, user, topK, config });
   }
 
   if (config.retrievalProvider === 'opensearch') {

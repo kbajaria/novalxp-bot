@@ -14,12 +14,13 @@ Lambda-style `/v1/chat` orchestrator implementation.
 - `MODEL_FALLBACK`
 - `MAX_OUTPUT_TOKENS_DEFAULT` (default `600`)
 - `RETRIEVAL_MIN_CITATIONS` (default `1`)
-- `RETRIEVAL_PROVIDER` (`local`, `catalog_api`, `opensearch`)
+- `RETRIEVAL_PROVIDER` (`local`, `catalog_api`, `moodle_ws`, `opensearch`)
 - `RETRIEVAL_CORPUS_PATH` (default `/Users/kamilabajaria/Projects/NovaLXP-Bot/backend/data/corpus.json`)
 - `RETRIEVAL_CATALOG_API_URL` (used when provider is `catalog_api`)
 - `RETRIEVAL_CATALOG_API_TOKEN` (optional bearer token for catalog API)
 - `RETRIEVAL_MOODLE_BASE_URL` (used when provider is `moodle_ws`, example `https://learn.novalxp.co.uk`)
 - `RETRIEVAL_MOODLE_TOKEN` (Moodle web service token for retrieval functions)
+  - Recommended Moodle WS functions for ranking: `core_course_get_courses`, `core_course_search_courses`, `core_course_get_contents`, `core_enrol_get_users_courses`, `core_completion_get_course_completion_status`
 
 ## Local Smoke Test
 ```bash

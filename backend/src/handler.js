@@ -41,6 +41,7 @@ async function retrieveForIntent(payload, intent) {
     intentHint: intentToRetrievalHint(intent),
     intent,
     context: payload.context,
+    user: payload.user,
     config,
     topK: 3,
   });
