@@ -70,6 +70,8 @@ async function generateAnswer(payload, intent, modelId, citations) {
       citations,
       maxTokens,
       temperature: 0,
+      intent,
+      userRole: payload.user && payload.user.role,
     });
 
     return {
@@ -91,6 +93,8 @@ async function generateAnswer(payload, intent, modelId, citations) {
       citations,
       maxTokens,
       temperature: 0,
+      intent,
+      userRole: payload.user && payload.user.role,
     });
 
     return {

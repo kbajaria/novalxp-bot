@@ -26,7 +26,20 @@ function extractText(output) {
   return textBlocks.join('\n');
 }
 
-async function converseWithBedrock({ region, modelId, userText, citations, maxTokens, temperature }) {
+function intentInstruction(intent) {
+  if (intent === 'course_recommendation') {
+    return 'For course recommendations: always provide 2-3 concrete course suggestions from retrieved context first, each with one short reason. Ask a follow-up question only after giving recommendations.';
+  }
+  if (intent === 'site_navigation') {
+    return 'For site navigation: provide exact click-path steps when possible.';
+  }
+  if (intent === 'section_explainer') {
+    return 'For section explainer: explain the current section content first, then provide one next action.';
+  }
+  return 'Provide a concise, direct answer grounded in context.';
+}
+
+async function converseWithBedrock({ region, modelId, userText, citations, maxTokens, temperature, intent, userRole }) {
   let BedrockRuntimeClient;
   let ConverseCommand;
 
@@ -42,8 +55,11 @@ async function converseWithBedrock({ region, modelId, userText, citations, maxTo
 
   const systemPrompt = [
     'You are the NovaLXP learning assistant.',
+    `User role: ${userRole || 'unknown'}.`,
+    `Intent: ${intent || 'other'}.`,
     'Answer using the provided context only when the question needs catalog or course details.',
-    'If context is insufficient, ask one concise clarifying question.',
+    intentInstruction(intent),
+    'If context is truly insufficient, ask one concise clarifying question.',
     'Cite only the provided source titles in plain text.',
   ].join(' ');
 
