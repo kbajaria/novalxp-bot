@@ -112,6 +112,33 @@ function logRequest(details) {
   console.log(JSON.stringify(details));
 }
 
+function buildActions(intent, citations) {
+  if (intent !== 'course_recommendation') {
+    return [];
+  }
+  return (citations || []).slice(0, 3).map((c) => ({
+    type: 'open_url',
+    label: `Open: ${c.title}`,
+    url: c.url,
+  }));
+}
+
+function ensureRecommendationCoverage(answerText, citations) {
+  const top = (citations || []).slice(0, 3);
+  if (!top.length) {
+    return answerText;
+  }
+
+  const lower = String(answerText || '').toLowerCase();
+  const missing = top.filter((c) => !lower.includes(String(c.title || '').toLowerCase()));
+  if (!missing.length) {
+    return answerText;
+  }
+
+  const lines = missing.map((c) => `- ${c.title}: ${c.url}`);
+  return `${answerText}\n\nAdditional recommended courses from your catalog:\n${lines.join('\n')}`;
+}
+
 async function handler(event) {
   const started = performance.now();
 
@@ -156,15 +183,20 @@ async function handler(event) {
       latency_ms: elapsed,
     });
 
+    const answerText = intent === 'course_recommendation'
+      ? ensureRecommendationCoverage(result.text, result.citations)
+      : result.text;
+    const actions = buildActions(intent, result.citations);
+
     return response(200, {
       request_id: payload.request_id,
       intent,
       answer: {
-        text: result.text,
+        text: answerText,
         confidence: result.confidence,
         citations: result.citations,
       },
-      actions: [],
+      actions,
       meta: {
         region: config.region,
         model_id: result.modelId,
