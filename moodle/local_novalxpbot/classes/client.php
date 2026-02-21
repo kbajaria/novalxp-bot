@@ -11,17 +11,20 @@ class client {
      * @param string $endpoint
      * @param string $apikey
      * @param array $payload
+     * @param int $timeout
      * @return array
      */
-    public static function post_chat(string $endpoint, string $apikey, array $payload): array {
-        $ch = curl_init($endpoint . '/v1/chat');
+    public static function post_chat(string $endpoint, string $apikey, array $payload, int $timeout = 20): array {
+        $url = rtrim($endpoint, '/') . '/v1/chat';
+        $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $apikey,
         ]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_SLASHES));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, max(5, $timeout));
 
         $raw = curl_exec($ch);
         $errno = curl_errno($ch);
@@ -37,7 +40,10 @@ class client {
             ];
         }
 
-        $decoded = json_decode($raw, true);
+        $decoded = json_decode((string)$raw, true);
+        if (!is_array($decoded)) {
+            $decoded = [];
+        }
         return [
             'ok' => $status >= 200 && $status < 300,
             'status' => $status,
