@@ -93,7 +93,11 @@ fi
 if [[ "${#REMOTE_CMDS[@]}" -gt 0 ]]; then
   echo "Running remote Moodle maintenance commands..."
   for cmd in "${REMOTE_CMDS[@]}"; do
-    ssh "${SSH_OPTS[@]}" "${EC2_USER}@${EC2_HOST}" "${REMOTE_PREFIX}$cmd"
+    if [[ "$USE_SUDO_REMOTE" == "true" ]]; then
+      ssh "${SSH_OPTS[@]}" "${EC2_USER}@${EC2_HOST}" "sudo bash -lc \"$cmd\""
+    else
+      ssh "${SSH_OPTS[@]}" "${EC2_USER}@${EC2_HOST}" "$cmd"
+    fi
   done
 fi
 
