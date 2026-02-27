@@ -10,6 +10,10 @@ to your remote Moodle path:
 
 using SSH + `rsync`.
 
+If web root and Moodle CLI root differ, use both variables:
+- `REMOTE_MOODLE_DIR` for plugin sync target
+- `REMOTE_MOODLE_CLI_DIR` for `admin/cli/*` commands
+
 ## Prerequisites
 
 1. You can SSH to your dev EC2 host.
@@ -27,6 +31,13 @@ export EC2_USER="ec2-user"
 export EC2_PORT="22"
 export EC2_SSH_KEY="$HOME/.ssh/novalxp-dev.pem"
 export REMOTE_MOODLE_DIR="/var/www/moodle"
+export REMOTE_MOODLE_CLI_DIR="/var/www/moodle"
+```
+
+For your current dev layout:
+```bash
+export REMOTE_MOODLE_DIR="/var/www/moodle/public"
+export REMOTE_MOODLE_CLI_DIR="/var/www/moodle"
 ```
 
 ## Dry run (no changes)

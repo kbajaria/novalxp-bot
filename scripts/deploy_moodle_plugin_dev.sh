@@ -7,6 +7,7 @@ set -euo pipefail
 #   EC2_HOST                  e.g. ec2-1-2-3-4.eu-west-2.compute.amazonaws.com
 #   EC2_USER                  e.g. ec2-user
 #   REMOTE_MOODLE_DIR         e.g. /var/www/moodle
+#   REMOTE_MOODLE_CLI_DIR     e.g. /var/www/moodle (if CLI scripts are outside web root)
 #
 # Optional env vars:
 #   EC2_PORT                  default: 22
@@ -22,6 +23,7 @@ set -euo pipefail
 EC2_HOST="${EC2_HOST:-}"
 EC2_USER="${EC2_USER:-}"
 REMOTE_MOODLE_DIR="${REMOTE_MOODLE_DIR:-}"
+REMOTE_MOODLE_CLI_DIR="${REMOTE_MOODLE_CLI_DIR:-$REMOTE_MOODLE_DIR}"
 EC2_PORT="${EC2_PORT:-22}"
 EC2_SSH_KEY="${EC2_SSH_KEY:-}"
 
@@ -82,10 +84,10 @@ fi
 
 REMOTE_CMDS=()
 if [[ "$RUN_UPGRADE" == "true" ]]; then
-  REMOTE_CMDS+=("cd '${REMOTE_MOODLE_DIR}' && '${MOODLE_PHP_BIN}' admin/cli/upgrade.php --non-interactive")
+  REMOTE_CMDS+=("cd '${REMOTE_MOODLE_CLI_DIR}' && '${MOODLE_PHP_BIN}' admin/cli/upgrade.php --non-interactive")
 fi
 if [[ "$RUN_PURGE" == "true" ]]; then
-  REMOTE_CMDS+=("cd '${REMOTE_MOODLE_DIR}' && '${MOODLE_PHP_BIN}' admin/cli/purge_caches.php")
+  REMOTE_CMDS+=("cd '${REMOTE_MOODLE_CLI_DIR}' && '${MOODLE_PHP_BIN}' admin/cli/purge_caches.php")
 fi
 
 if [[ "${#REMOTE_CMDS[@]}" -gt 0 ]]; then
