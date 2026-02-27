@@ -6,7 +6,7 @@ This deploys plugin files from:
 
 to your remote Moodle path:
 
-- `<REMOTE_MOODLE_DIR>/local/local_novalxpbot`
+- `<REMOTE_MOODLE_DIR>/local/novalxpbot`
 
 using SSH + `rsync`.
 
@@ -71,7 +71,7 @@ RUN_PURGE=false /Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/deploy_moodle_
 
 - Override remote plugin directory:
 ```bash
-REMOTE_PLUGIN_DIR="/var/www/moodle/local/local_novalxpbot" \
+REMOTE_PLUGIN_DIR="/var/www/moodle/local/novalxpbot" \
 /Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/deploy_moodle_plugin_dev.sh
 ```
 
@@ -81,4 +81,4 @@ REMOTE_PLUGIN_DIR="/var/www/moodle/local/local_novalxpbot" \
 2. Run dry run.
 3. Run real deploy.
 4. Verify endpoint on dev:
-   - `https://dev.novalxp.co.uk/local/local_novalxpbot/chat.php`
+   - `https://dev.novalxp.co.uk/local/novalxpbot/chat.php`

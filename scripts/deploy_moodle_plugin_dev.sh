@@ -13,7 +13,7 @@ set -euo pipefail
 #   EC2_PORT                  default: 22
 #   EC2_SSH_KEY               path to private key
 #   PLUGIN_SRC_DIR            default: <repo>/moodle/local_novalxpbot
-#   REMOTE_PLUGIN_DIR         default: <REMOTE_MOODLE_DIR>/local/local_novalxpbot
+#   REMOTE_PLUGIN_DIR         default: <REMOTE_MOODLE_DIR>/local/novalxpbot
 #   RUN_UPGRADE               default: true
 #   RUN_PURGE                 default: true
 #   MOODLE_PHP_BIN            default: php
@@ -29,7 +29,7 @@ EC2_SSH_KEY="${EC2_SSH_KEY:-}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PLUGIN_SRC_DIR="${PLUGIN_SRC_DIR:-$REPO_ROOT/moodle/local_novalxpbot}"
-REMOTE_PLUGIN_DIR="${REMOTE_PLUGIN_DIR:-$REMOTE_MOODLE_DIR/local/local_novalxpbot}"
+REMOTE_PLUGIN_DIR="${REMOTE_PLUGIN_DIR:-$REMOTE_MOODLE_DIR/local/novalxpbot}"
 
 RUN_UPGRADE="${RUN_UPGRADE:-true}"
 RUN_PURGE="${RUN_PURGE:-true}"
