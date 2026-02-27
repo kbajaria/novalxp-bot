@@ -20,7 +20,10 @@ Lambda-style `/v1/chat` orchestrator implementation.
 - `RETRIEVAL_CATALOG_API_TOKEN` (optional bearer token for catalog API)
 - `RETRIEVAL_MOODLE_BASE_URL` (used when provider is `moodle_ws`, example `https://learn.novalxp.co.uk`)
 - `RETRIEVAL_MOODLE_TOKEN` (Moodle web service token for retrieval functions)
+- `RETRIEVAL_MOODLE_FORWARDED_HOST` (optional host header for loopback proxy setups, example `dev.novalxp.co.uk`)
+- `RETRIEVAL_MOODLE_TIMEOUT_MS` (default `15000`)
   - Recommended Moodle WS functions for ranking: `core_course_get_courses`, `core_course_search_courses`, `core_course_get_contents`, `core_enrol_get_users_courses`, `core_completion_get_course_completion_status`
+  - When `RETRIEVAL_PROVIDER=moodle_ws`, `RETRIEVAL_CORPUS_PATH` is ignored.
 
 ## Local Smoke Test
 ```bash
@@ -51,8 +54,9 @@ node src/smoke-test.js
 ```bash
 AWS_REGION=eu-west-2 \
 RETRIEVAL_PROVIDER=moodle_ws \
-RETRIEVAL_MOODLE_BASE_URL=https://learn.novalxp.co.uk \
+RETRIEVAL_MOODLE_BASE_URL=http://127.0.0.1 \
 RETRIEVAL_MOODLE_TOKEN=REPLACE_WITH_NEW_TOKEN \
+RETRIEVAL_MOODLE_FORWARDED_HOST=dev.novalxp.co.uk \
 USE_BEDROCK=false \
 node src/smoke-test.js
 ```

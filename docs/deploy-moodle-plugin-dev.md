@@ -82,3 +82,20 @@ REMOTE_PLUGIN_DIR="/var/www/moodle/local/novalxpbot" \
 3. Run real deploy.
 4. Verify endpoint on dev:
    - `https://dev.novalxp.co.uk/local/novalxpbot/chat.php`
+
+## Retrieval Mode (Operational)
+
+Use live Moodle WS retrieval for dev/runtime (no local corpus file dependency):
+
+- In `/etc/novalxp-bot.env`:
+  - `RETRIEVAL_PROVIDER=moodle_ws`
+  - `RETRIEVAL_MOODLE_BASE_URL=http://127.0.0.1`
+  - `RETRIEVAL_MOODLE_FORWARDED_HOST=dev.novalxp.co.uk`
+  - `RETRIEVAL_MOODLE_TOKEN=<moodle ws token>`
+- Keep required WS functions on the bot service:
+  - `core_course_get_courses`
+  - `core_course_search_courses`
+  - `core_course_get_contents`
+  - `core_enrol_get_users_courses`
+  - `core_completion_get_course_completion_status`
+- Ensure any corpus refresh timer is disabled when running `moodle_ws`.

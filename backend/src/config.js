@@ -31,6 +31,8 @@ const config = {
   retrievalCatalogApiToken: process.env.RETRIEVAL_CATALOG_API_TOKEN || '',
   retrievalMoodleBaseUrl: process.env.RETRIEVAL_MOODLE_BASE_URL || '',
   retrievalMoodleToken: process.env.RETRIEVAL_MOODLE_TOKEN || '',
+  retrievalMoodleForwardedHost: process.env.RETRIEVAL_MOODLE_FORWARDED_HOST || process.env.RETRIEVAL_MOODLE_HOST_HEADER || '',
+  retrievalMoodleTimeoutMs: Number(process.env.RETRIEVAL_MOODLE_TIMEOUT_MS || 15000),
 };
 
 module.exports = {

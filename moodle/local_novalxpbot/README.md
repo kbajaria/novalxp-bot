@@ -33,6 +33,30 @@ Response (JSON):
 - `actions` array of open_url links
 - `meta` model/latency fields
 
+## Dashboard Wiring
+The plugin now auto-loads `local_novalxpbot/chat_client` on Moodle dashboard pages
+(`$PAGE->pagelayout === 'mydashboard'`).
+
+Add dashboard markup with these data attributes:
+
+```html
+<form data-novalxpbot-form>
+  <input type="text" data-novalxpbot-question placeholder="Ask Nova..." />
+  <input type="hidden" data-novalxpbot-history value="[]" />
+  <button type="submit">Send</button>
+</form>
+<div data-novalxpbot-output></div>
+```
+
+Defaults used by the AMD module:
+- form: `[data-novalxpbot-form]`
+- question input: `[data-novalxpbot-question]`
+- history input: `[data-novalxpbot-history]` (JSON string)
+- output target: `[data-novalxpbot-output]`
+
+If no matching markup exists, the module auto-injects a default floating
+chat widget on the dashboard page.
+
 ## JS Example
 ```js
 const params = new URLSearchParams();

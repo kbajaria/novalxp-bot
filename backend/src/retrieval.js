@@ -1,14 +1,25 @@
 'use strict';
 
 const fs = require('node:fs');
+const http = require('node:http');
+const https = require('node:https');
 const { makeError } = require('./errors');
+
+const STOPWORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'been',
+  'to', 'of', 'for', 'in', 'on', 'at', 'by', 'with', 'from', 'as',
+  'i', 'me', 'my', 'you', 'your', 'we', 'our', 'it', 'this', 'that',
+  'what', 'where', 'when', 'how', 'which', 'who', 'there',
+  'do', 'does', 'did', 'can', 'could', 'should', 'would',
+  'course', 'courses'
+]);
 
 function tokenize(value) {
   return String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
-    .filter(Boolean);
+    .filter((token) => token && token.length > 1 && !STOPWORDS.has(token));
 }
 
 function loadCorpus(corpusPath) {
@@ -17,18 +28,32 @@ function loadCorpus(corpusPath) {
   return Array.isArray(parsed) ? parsed : [];
 }
 
-function scoreDoc(queryTokens, doc, intentHint) {
+function scoreDoc(queryTokens, doc, intentHint, queryText = '') {
   const haystack = tokenize(`${doc.title || ''} ${doc.snippet || ''} ${(doc.tags || []).join(' ')}`);
   const set = new Set(haystack);
+  const tags = Array.isArray(doc.tags) ? doc.tags.map((t) => String(t).toLowerCase()) : [];
+  const rawText = `${doc.title || ''} ${doc.snippet || ''}`.toLowerCase();
+  const onboardingQuery = /onboard|induction|new starter/.test(String(queryText || '').toLowerCase());
   let score = 0;
+
   for (const token of queryTokens) {
     if (set.has(token)) {
-      score += 1;
+      score += token.startsWith('onboard') ? 4 : 1;
     }
   }
+
   if (intentHint && Array.isArray(doc.tags) && doc.tags.includes(intentHint)) {
     score += 2;
   }
+
+  if (onboardingQuery) {
+    if (tags.includes('onboarding') || /onboard|induction|new starter/.test(rawText)) {
+      score += 10;
+    } else {
+      score -= 2;
+    }
+  }
+
   return score;
 }
 
@@ -37,7 +62,7 @@ function retrieveLocal({ queryText, intentHint, corpusPath, topK = 3 }) {
   const queryTokens = tokenize(queryText);
 
   return corpus
-    .map((doc) => ({ doc, score: scoreDoc(queryTokens, doc, intentHint) }))
+    .map((doc) => ({ doc, score: scoreDoc(queryTokens, doc, intentHint, queryText) }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, topK)
@@ -125,21 +150,86 @@ async function callMoodleWs(config, wsfunction, params) {
   }
 
   const endpoint = `${config.retrievalMoodleBaseUrl.replace(/\/$/, '')}/webservice/rest/server.php`;
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: form.toString(),
-  });
-
-  if (!res.ok) {
-    throw makeError('RETRIEVAL_UNAVAILABLE', `Moodle WS returned HTTP ${res.status}.`, true);
+  const headers = {
+    'content-type': 'application/x-www-form-urlencoded',
+    // Local loopback calls need to be treated as HTTPS in Moodle context to avoid redirects.
+    'x-forwarded-proto': 'https',
+  };
+  if (config.retrievalMoodleForwardedHost) {
+    headers.host = config.retrievalMoodleForwardedHost;
+    headers['x-forwarded-host'] = config.retrievalMoodleForwardedHost;
   }
 
-  const parsed = await res.json();
+  const response = await postFormUrlEncoded({
+    endpoint,
+    body: form.toString(),
+    headers,
+    timeoutMs: Math.max(1000, Number(config.retrievalMoodleTimeoutMs || 15000)),
+  });
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    if (response.statusCode >= 300 && response.statusCode < 400) {
+      throw makeError(
+        'RETRIEVAL_UNAVAILABLE',
+        `Moodle WS redirected (${response.statusCode}) to ${response.headers.location || 'unknown location'}.`,
+        true
+      );
+    }
+    throw makeError('RETRIEVAL_UNAVAILABLE', `Moodle WS returned HTTP ${response.statusCode}.`, true);
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(response.body || '{}');
+  } catch (_err) {
+    throw makeError(
+      'RETRIEVAL_UNAVAILABLE',
+      `Moodle WS returned non-JSON response (HTTP ${response.statusCode}).`,
+      true
+    );
+  }
   if (parsed && parsed.exception) {
     throw makeError('RETRIEVAL_UNAVAILABLE', `Moodle WS error: ${parsed.errorcode || parsed.exception}.`, true);
   }
   return parsed;
+}
+
+function postFormUrlEncoded({ endpoint, body, headers, timeoutMs }) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(endpoint);
+    const transport = url.protocol === 'https:' ? https : http;
+    const payload = String(body || '');
+    const req = transport.request({
+      protocol: url.protocol,
+      hostname: url.hostname,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      path: `${url.pathname}${url.search}`,
+      method: 'POST',
+      headers: {
+        ...headers,
+        'content-length': Buffer.byteLength(payload),
+      },
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => {
+        resolve({
+          statusCode: Number(res.statusCode || 0),
+          headers: res.headers || {},
+          body: Buffer.concat(chunks).toString('utf8'),
+        });
+      });
+    });
+
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error(`Timeout after ${timeoutMs}ms`));
+    });
+    req.on('error', (err) => {
+      reject(makeError('RETRIEVAL_UNAVAILABLE', `Moodle WS request failed: ${err.message}`, true));
+    });
+    req.write(payload);
+    req.end();
+  });
 }
 
 async function getEnrolledCourseMap(config, userId) {
@@ -215,16 +305,7 @@ async function retrieveFromMoodleWs({ queryText, intent, context, user, topK = 3
 
   // 1) Course recommendations / navigation: search courses first.
   if (intent === 'course_recommendation' || intent === 'site_navigation' || intent === 'other') {
-    let search = null;
-    try {
-      search = await callMoodleWs(config, 'core_course_search_courses', {
-        criterianame: 'search',
-        criteriavalue: queryText,
-      });
-    } catch (_err) {
-      search = null;
-    }
-
+    const search = await searchCourses(config, queryText);
     const courses = Array.isArray(search && search.courses)
       ? search.courses
       : await callMoodleWs(config, 'core_course_get_courses', {});
@@ -302,6 +383,31 @@ async function retrieveFromMoodleWs({ queryText, intent, context, user, topK = 3
     }
   }
   return dedup.slice(0, topK);
+}
+
+async function searchCourses(config, queryText) {
+  // Moodle deployments differ on expected parameters for core_course_search_courses.
+  const attempts = [
+    { criterianame: 'search', criteriavalue: queryText },
+    { 'criteria[0][key]': 'search', 'criteria[0][value]': queryText },
+  ];
+
+  for (const params of attempts) {
+    try {
+      const result = await callMoodleWs(config, 'core_course_search_courses', params);
+      if (Array.isArray(result && result.courses) && result.courses.length > 0) {
+        return result;
+      }
+      // Some Moodle versions nest results differently; handle that shape too.
+      if (Array.isArray(result && result.results) && result.results.length > 0) {
+        return { courses: result.results };
+      }
+    } catch (_err) {
+      // Try next search shape.
+    }
+  }
+
+  return null;
 }
 
 async function retrieveContext({ queryText, intentHint, intent, context, user, config, topK = 3 }) {

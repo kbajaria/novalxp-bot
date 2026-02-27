@@ -4,7 +4,8 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "smoke": "node src/smoke-test.js"
+    "smoke": "node src/smoke-test.js",
+    "serve": "node src/http-server.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.883.0"
