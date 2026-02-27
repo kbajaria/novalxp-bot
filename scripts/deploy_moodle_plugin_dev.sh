@@ -17,6 +17,7 @@ set -euo pipefail
 #   RUN_PURGE                 default: true
 #   MOODLE_PHP_BIN            default: php
 #   DRY_RUN                   default: false
+#   USE_SUDO_REMOTE           default: true
 
 EC2_HOST="${EC2_HOST:-}"
 EC2_USER="${EC2_USER:-}"
@@ -32,6 +33,7 @@ RUN_UPGRADE="${RUN_UPGRADE:-true}"
 RUN_PURGE="${RUN_PURGE:-true}"
 MOODLE_PHP_BIN="${MOODLE_PHP_BIN:-php}"
 DRY_RUN="${DRY_RUN:-false}"
+USE_SUDO_REMOTE="${USE_SUDO_REMOTE:-true}"
 
 if [[ -z "$EC2_HOST" || -z "$EC2_USER" || -z "$REMOTE_MOODLE_DIR" ]]; then
   echo "Missing required env vars. Required: EC2_HOST, EC2_USER, REMOTE_MOODLE_DIR" >&2
@@ -56,10 +58,21 @@ fi
 echo "Deploying plugin from: $PLUGIN_SRC_DIR"
 echo "Remote target: ${EC2_USER}@${EC2_HOST}:${REMOTE_PLUGIN_DIR}"
 echo "Dry run: $DRY_RUN"
+echo "Use sudo remote: $USE_SUDO_REMOTE"
 
-ssh "${SSH_OPTS[@]}" "${EC2_USER}@${EC2_HOST}" "mkdir -p '${REMOTE_PLUGIN_DIR}'"
+REMOTE_PREFIX=""
+if [[ "$USE_SUDO_REMOTE" == "true" ]]; then
+  REMOTE_PREFIX="sudo "
+fi
 
-rsync "${RSYNC_OPTS[@]}" -e "ssh ${SSH_OPTS[*]}" \
+ssh "${SSH_OPTS[@]}" "${EC2_USER}@${EC2_HOST}" "${REMOTE_PREFIX}mkdir -p '${REMOTE_PLUGIN_DIR}'"
+
+RSYNC_PATH_OPT=()
+if [[ "$USE_SUDO_REMOTE" == "true" ]]; then
+  RSYNC_PATH_OPT=(--rsync-path="sudo rsync")
+fi
+
+rsync "${RSYNC_OPTS[@]}" "${RSYNC_PATH_OPT[@]}" -e "ssh ${SSH_OPTS[*]}" \
   "${PLUGIN_SRC_DIR}/" "${EC2_USER}@${EC2_HOST}:${REMOTE_PLUGIN_DIR}/"
 
 if [[ "$DRY_RUN" == "true" ]]; then
@@ -78,7 +91,7 @@ fi
 if [[ "${#REMOTE_CMDS[@]}" -gt 0 ]]; then
   echo "Running remote Moodle maintenance commands..."
   for cmd in "${REMOTE_CMDS[@]}"; do
-    ssh "${SSH_OPTS[@]}" "${EC2_USER}@${EC2_HOST}" "$cmd"
+    ssh "${SSH_OPTS[@]}" "${EC2_USER}@${EC2_HOST}" "${REMOTE_PREFIX}$cmd"
   done
 fi
 

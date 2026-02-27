@@ -43,6 +43,11 @@ DRY_RUN=true /Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/deploy_moodle_plu
 
 ## Optional controls
 
+- Disable remote sudo (only if remote user already has write permissions):
+```bash
+USE_SUDO_REMOTE=false /Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/deploy_moodle_plugin_dev.sh
+```
+
 - Skip upgrade:
 ```bash
 RUN_UPGRADE=false /Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/deploy_moodle_plugin_dev.sh
