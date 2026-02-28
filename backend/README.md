@@ -60,3 +60,8 @@ RETRIEVAL_MOODLE_FORWARDED_HOST=dev.novalxp.co.uk \
 USE_BEDROCK=false \
 node src/smoke-test.js
 ```
+
+## Corpus Handoff Note
+- Current runtime target is `RETRIEVAL_PROVIDER=moodle_ws` for dev/test/prod, so live Moodle data is used for broad course coverage.
+- If you switch any environment to `RETRIEVAL_PROVIDER=local`, the file at `backend/data/corpus.json` must include all relevant live courses (not a small subset), or course recommendations may fail with `RETRIEVAL_UNAVAILABLE` for queries outside the seeded items.
+- When adding new corpus data in future, treat corpus completeness as a release requirement for any environment using local retrieval.
