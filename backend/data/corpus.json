@@ -14,6 +14,20 @@
     "tags": ["catalog", "kyc", "section_explainer"]
   },
   {
+    "source_id": "course_301_onboarding",
+    "title": "NovaLXP Onboarding Essentials",
+    "url": "/course/view.php?id=301",
+    "snippet": "Onboarding Essentials is the recommended starter course for new starters joining NovaLXP.",
+    "tags": ["catalog", "onboarding", "recommendation"]
+  },
+  {
+    "source_id": "course_302_onboarding_checks",
+    "title": "Client Onboarding Checks",
+    "url": "/course/view.php?id=302",
+    "snippet": "Covers onboarding checks, KYC basics, and required first-week compliance tasks.",
+    "tags": ["catalog", "onboarding", "recommendation", "section_explainer"]
+  },
+  {
     "source_id": "nav_dashboard",
     "title": "NovaLXP Navigation: Dashboard",
     "url": "/my/",
