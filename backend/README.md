@@ -29,6 +29,24 @@ Lambda-style `/v1/chat` orchestrator implementation.
   - Recommended Moodle WS functions for ranking: `core_course_get_courses`, `core_course_search_courses`, `core_course_get_contents`, `core_enrol_get_users_courses`, `core_completion_get_course_completion_status`, `core_completion_get_activities_completion_status` (optional but recommended), `mod_glossary_get_glossaries_by_courses` (optional), `mod_glossary_get_entries_by_search` or `mod_glossary_get_entries_by_letter` (optional)
   - When `RETRIEVAL_PROVIDER=moodle_ws`, `RETRIEVAL_CORPUS_PATH` is ignored.
 
+## Production Scheduled Refresh
+
+Production should run nightly corpus refresh outside AWS backup window (observed around `19:00 UTC`).
+
+- Timer unit: `novalxp-corpus-refresh.timer`
+- Service unit: `novalxp-corpus-refresh.service`
+- Script: `/opt/novalxp-bot/backend/scripts/nightly_corpus_refresh.sh`
+- Schedule: `OnCalendar=*-*-* 02:30:00 UTC`
+- Jitter: `RandomizedDelaySec=10m`
+
+Check status on prod:
+
+```bash
+ssh prod-moodle-ec2 "systemctl list-timers --all --no-pager | grep novalxp-corpus-refresh"
+ssh prod-moodle-ec2 "sudo systemctl status novalxp-corpus-refresh.timer --no-pager -l"
+ssh prod-moodle-ec2 "sudo journalctl -u novalxp-corpus-refresh.service -n 100 --no-pager"
+```
+
 ## Local Smoke Test
 ```bash
 node /Users/kamilabajaria/Projects/NovaLXP-Bot/backend/src/smoke-test.js
