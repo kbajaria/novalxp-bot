@@ -14,6 +14,8 @@ const config = {
     site_navigation: process.env.MODEL_SITE_NAV || 'amazon.nova-lite-v1:0',
     course_recommendation: process.env.MODEL_COURSE_REC || 'amazon.nova-pro-v1:0',
     section_explainer: process.env.MODEL_SECTION_EXPLAINER || 'amazon.nova-pro-v1:0',
+    progress_completion: process.env.MODEL_PROGRESS_COMPLETION || 'amazon.nova-pro-v1:0',
+    glossary_policy: process.env.MODEL_GLOSSARY_POLICY || 'amazon.nova-pro-v1:0',
     other: process.env.MODEL_OTHER || 'amazon.nova-lite-v1:0',
   },
   fallbackModelId: process.env.MODEL_FALLBACK || 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
@@ -27,12 +29,14 @@ const config = {
   retrievalMinCitations: Number(process.env.RETRIEVAL_MIN_CITATIONS || 1),
   retrievalProvider: process.env.RETRIEVAL_PROVIDER || 'local',
   retrievalCorpusPath: process.env.RETRIEVAL_CORPUS_PATH || '/Users/kamilabajaria/Projects/NovaLXP-Bot/backend/data/corpus.json',
+  retrievalFaqCorpusPath: process.env.RETRIEVAL_FAQ_CORPUS_PATH || '/Users/kamilabajaria/Projects/NovaLXP-Bot/backend/data/faq_corpus.json',
   retrievalCatalogApiUrl: process.env.RETRIEVAL_CATALOG_API_URL || '',
   retrievalCatalogApiToken: process.env.RETRIEVAL_CATALOG_API_TOKEN || '',
   retrievalMoodleBaseUrl: process.env.RETRIEVAL_MOODLE_BASE_URL || '',
   retrievalMoodleToken: process.env.RETRIEVAL_MOODLE_TOKEN || '',
   retrievalMoodleForwardedHost: process.env.RETRIEVAL_MOODLE_FORWARDED_HOST || process.env.RETRIEVAL_MOODLE_HOST_HEADER || '',
   retrievalMoodleTimeoutMs: Number(process.env.RETRIEVAL_MOODLE_TIMEOUT_MS || 15000),
+  recommendByDepartment: boolFromEnv('RECOMMEND_BY_DEPARTMENT', true),
 };
 
 module.exports = {

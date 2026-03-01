@@ -36,6 +36,12 @@ function intentInstruction(intent) {
   if (intent === 'section_explainer') {
     return 'For section explainer: explain the current section content first, then provide one next action.';
   }
+  if (intent === 'progress_completion') {
+    return 'For progress/completion: state what remains to complete first, then explain likely completion blockers in plain language, and end with one concrete next step.';
+  }
+  if (intent === 'glossary_policy') {
+    return 'For glossary/policy: define the term or state the rule first in one sentence, then provide a short policy snippet and one follow-up action.';
+  }
   return 'Provide a concise, direct answer grounded in context.';
 }
 

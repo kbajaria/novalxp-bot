@@ -92,10 +92,28 @@ Use live Moodle WS retrieval for dev/runtime (no local corpus file dependency):
   - `RETRIEVAL_MOODLE_BASE_URL=http://127.0.0.1`
   - `RETRIEVAL_MOODLE_FORWARDED_HOST=dev.novalxp.co.uk`
   - `RETRIEVAL_MOODLE_TOKEN=<moodle ws token>`
+  - `RETRIEVAL_FAQ_CORPUS_PATH=/opt/novalxp-bot/backend/data/faq_corpus.json`
 - Keep required WS functions on the bot service:
   - `core_course_get_courses`
   - `core_course_search_courses`
   - `core_course_get_contents`
   - `core_enrol_get_users_courses`
   - `core_completion_get_course_completion_status`
+  - `core_completion_get_activities_completion_status` (recommended for detailed completion blockers)
+  - `mod_glossary_get_glossaries_by_courses` (optional for glossary definitions)
+  - `mod_glossary_get_entries_by_search` or `mod_glossary_get_entries_by_letter` (optional for glossary definitions)
 - Ensure any corpus refresh timer is disabled when running `moodle_ws`.
+
+## Manual FAQ Refresh
+
+Use the one-command script from this repo to regenerate FAQ docs from anonymized chat logs:
+
+```bash
+/Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/refresh_faq_corpus_remote.sh
+```
+
+Target test host later:
+
+```bash
+SSH_TARGET=test-moodle-ec2 /Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/refresh_faq_corpus_remote.sh
+```

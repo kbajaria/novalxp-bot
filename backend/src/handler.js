@@ -1,6 +1,7 @@
 'use strict';
 
 const { performance } = require('node:perf_hooks');
+const { createHash } = require('node:crypto');
 const { validateRequest } = require('./validation');
 const { classifyIntent } = require('./intent');
 const { routeModel } = require('./routing');
@@ -19,7 +20,10 @@ function response(statusCode, body) {
 }
 
 function shouldRequireGrounding(intent) {
-  return intent === 'course_recommendation' || intent === 'section_explainer';
+  return intent === 'course_recommendation'
+    || intent === 'section_explainer'
+    || intent === 'progress_completion'
+    || intent === 'glossary_policy';
 }
 
 function intentToRetrievalHint(intent) {
@@ -31,6 +35,12 @@ function intentToRetrievalHint(intent) {
   }
   if (intent === 'site_navigation') {
     return 'site_navigation';
+  }
+  if (intent === 'progress_completion') {
+    return 'progress_completion';
+  }
+  if (intent === 'glossary_policy') {
+    return 'glossary_policy';
   }
   return '';
 }
@@ -112,6 +122,31 @@ function logRequest(details) {
   console.log(JSON.stringify(details));
 }
 
+function anonymizeText(input) {
+  return String(input || '')
+    .toLowerCase()
+    .replace(/\b[\w.%+-]+@[\w.-]+\.[a-z]{2,}\b/g, '[email]')
+    .replace(/\bhttps?:\/\/\S+\b/g, '[url]')
+    .replace(/\b\d{6,}\b/g, '[number]')
+    .replace(/\b[0-9a-f]{8}-[0-9a-f-]{27,}\b/gi, '[id]')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function canonicalizeQuestion(input) {
+  return anonymizeText(input)
+    .replace(/[^a-z0-9\[\]\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function hashQuestion(value) {
+  if (!value) {
+    return '';
+  }
+  return createHash('sha1').update(value).digest('hex').slice(0, 16);
+}
+
 function buildActions(intent, citations) {
   if (intent !== 'course_recommendation') {
     return [];
@@ -172,6 +207,11 @@ async function handler(event) {
 
     const result = await generateAnswer(payload, intent, modelId, citations);
     const elapsed = Math.round(performance.now() - started);
+    const rawQuestion = payload && payload.query ? payload.query.text : '';
+    const queryCanonical = canonicalizeQuestion(rawQuestion);
+    const queryAnon = anonymizeText(rawQuestion);
+    const topCitation = (result.citations || [])[0] || null;
+    const answerPreview = anonymizeText(result.text || '').slice(0, 300);
 
     logRequest({
       request_id: payload.request_id,
@@ -181,6 +221,12 @@ async function handler(event) {
       fallback_used: result.fallbackUsed,
       retrieved_chunk_count: citations.length,
       latency_ms: elapsed,
+      query_text_anon: queryAnon,
+      query_canonical: queryCanonical,
+      query_hash: hashQuestion(queryCanonical),
+      answer_preview_anon: answerPreview,
+      top_citation_title: topCitation ? topCitation.title : '',
+      top_citation_url: topCitation ? topCitation.url : '',
     });
 
     const answerText = intent === 'course_recommendation'
