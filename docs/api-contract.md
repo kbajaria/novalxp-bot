@@ -25,6 +25,7 @@ Define the request/response contract between Moodle (NovaLXP plugin/block) and t
   "context": {
     "course_id": "987",
     "course_name": "Financial Crime Foundations",
+    "course_title": "Financial Crime Foundations",
     "section_id": "4",
     "section_title": "KYC Red Flags",
     "page_type": "course_section",
@@ -99,6 +100,7 @@ Define the request/response contract between Moodle (NovaLXP plugin/block) and t
 ## Intents
 - `site_navigation`
 - `course_recommendation`
+- `course_companion_setup`
 - `section_explainer`
 - `other`
 

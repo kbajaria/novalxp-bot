@@ -37,6 +37,7 @@ const config = {
   retrievalMoodleForwardedHost: process.env.RETRIEVAL_MOODLE_FORWARDED_HOST || process.env.RETRIEVAL_MOODLE_HOST_HEADER || '',
   retrievalMoodleTimeoutMs: Number(process.env.RETRIEVAL_MOODLE_TIMEOUT_MS || 15000),
   recommendByDepartment: boolFromEnv('RECOMMEND_BY_DEPARTMENT', true),
+  courseCompanionTemplateUrl: process.env.COURSE_COMPANION_TEMPLATE_URL || '',
 };
 
 module.exports = {

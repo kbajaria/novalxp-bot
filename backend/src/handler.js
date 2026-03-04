@@ -30,6 +30,9 @@ function intentToRetrievalHint(intent) {
   if (intent === 'course_recommendation') {
     return 'recommendation';
   }
+  if (intent === 'course_companion_setup') {
+    return 'section_explainer';
+  }
   if (intent === 'section_explainer') {
     return 'section_explainer';
   }
@@ -57,7 +60,144 @@ async function retrieveForIntent(payload, intent) {
   });
 }
 
+function normalizeUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) {
+    return '';
+  }
+  if (/^https?:\/\//i.test(value) || value.startsWith('/')) {
+    return value;
+  }
+  return '';
+}
+
+function dedupeByUrl(citations) {
+  const seen = new Set();
+  const out = [];
+  for (const item of (citations || [])) {
+    const url = normalizeUrl(item && item.url);
+    if (!url || seen.has(url)) {
+      continue;
+    }
+    seen.add(url);
+    out.push(item);
+  }
+  return out;
+}
+
+function isGenericCourseName(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (!text) {
+    return true;
+  }
+  return text === 'novalxp'
+    || text === 'course'
+    || text === 'my courses'
+    || text === 'learning'
+    || text === 'dashboard';
+}
+
+function buildPromptSubject(courseName, sectionTitle, citations) {
+  const cleanCourse = String(courseName || '').trim();
+  const cleanSection = String(sectionTitle || '').trim();
+  const topCitationTitle = String(((citations || [])[0] || {}).title || '').trim();
+
+  let subject = cleanCourse;
+  if (isGenericCourseName(subject) && topCitationTitle) {
+    subject = topCitationTitle;
+  }
+  if (!subject) {
+    subject = topCitationTitle || 'this course';
+  }
+  if (cleanSection) {
+    return `${subject} (${cleanSection})`;
+  }
+  return subject;
+}
+
+function buildCourseCompanionText(payload, citations) {
+  const context = payload && payload.context ? payload.context : {};
+  const courseTitle = String(context.course_title || '').trim();
+  const courseName = courseTitle || String(context.course_name || '').trim() || 'this course';
+  const sectionTitle = String(context.section_title || '').trim();
+  const currentUrl = normalizeUrl(context.current_url);
+  const templateUrl = normalizeUrl(context.course_companion_template_url) || normalizeUrl(config.courseCompanionTemplateUrl);
+  const courseResourceCitations = dedupeByUrl(citations).slice(0, 5);
+  const courseResourceLines = courseResourceCitations
+    .map((c, idx) => `${idx + 1}. ${c.title}: ${c.url}`)
+    .join('\n');
+
+  const sectionFocus = sectionTitle ? ` with a focus on "${sectionTitle}"` : '';
+  const promptSubject = buildPromptSubject(courseName, sectionTitle, courseResourceCitations);
+
+  const stepAUrlLine = templateUrl
+    ? `Use this Course Notes template and create your own copy now: ${templateUrl}`
+    : 'Create a new Google Doc named "Course Notes - ' + courseName + '".';
+
+  const notebookSourceLines = [
+    '1. Your Course Notes doc (from Step A).',
+    currentUrl ? `2. The current course page: ${currentUrl}` : '',
+    ...courseResourceCitations.map((c, idx) => `${(currentUrl ? 3 : 2) + idx}. ${c.title}: ${c.url}`),
+  ].filter(Boolean).join('\n');
+
+  return [
+    `Course Companion Setup for "${courseName}"${sectionFocus}`,
+    '',
+    'Step A: Create/open your Course Notes doc',
+    stepAUrlLine,
+    '',
+    'Step B: Add sources to NotebookLM (exactly these)',
+    notebookSourceLines,
+    '',
+    'Step C: Copy-paste starter prompts (tailored to this course)',
+    `1) "Use my notes and sources to create a 10-bullet summary of ${promptSubject}. Highlight what I should memorise for assessments."`,
+    `2) "Turn ${promptSubject} into a study plan for this week with daily 20-minute tasks and a quick self-check at the end of each day."`,
+    `3) "Based on ${promptSubject}, quiz me with 8 scenario-based questions. After each answer, explain why it is correct or incorrect using my notes."`,
+    '',
+    'Reply "done" after you add your sources and I will suggest your next best study action.'
+  ].join('\n');
+}
+
+function buildCourseCompanionActions(payload, citations) {
+  const context = payload && payload.context ? payload.context : {};
+  const actions = [];
+  const templateUrl = normalizeUrl(context.course_companion_template_url) || normalizeUrl(config.courseCompanionTemplateUrl);
+  if (templateUrl) {
+    actions.push({
+      type: 'open_url',
+      label: 'Open Course Notes template',
+      url: templateUrl,
+    });
+  }
+  actions.push({
+    type: 'open_url',
+    label: 'Open NotebookLM',
+    url: 'https://notebooklm.google.com/',
+  });
+
+  const resourceLinks = dedupeByUrl(citations).slice(0, 2);
+  for (const ref of resourceLinks) {
+    actions.push({
+      type: 'open_url',
+      label: `Open source: ${ref.title}`,
+      url: ref.url,
+    });
+  }
+  return actions;
+}
+
 async function generateAnswer(payload, intent, modelId, citations) {
+  if (intent === 'course_companion_setup') {
+    return {
+      text: buildCourseCompanionText(payload, citations),
+      confidence: 0.92,
+      citations,
+      modelId: 'rule.course_companion_setup',
+      fallbackUsed: false,
+      actions: buildCourseCompanionActions(payload, citations),
+    };
+  }
+
   if (!config.useBedrock) {
     return {
       text: `Stub answer for intent=${intent}. Query: ${payload.query.text}`,
@@ -65,6 +205,7 @@ async function generateAnswer(payload, intent, modelId, citations) {
       citations,
       modelId,
       fallbackUsed: false,
+      actions: [],
     };
   }
 
@@ -90,6 +231,7 @@ async function generateAnswer(payload, intent, modelId, citations) {
       citations,
       modelId,
       fallbackUsed: false,
+      actions: [],
     };
   } catch (err) {
     if (!(payload.options && payload.options.allow_model_fallback)) {
@@ -113,6 +255,7 @@ async function generateAnswer(payload, intent, modelId, citations) {
       citations,
       modelId: config.fallbackModelId,
       fallbackUsed: true,
+      actions: [],
     };
   }
 }
@@ -147,7 +290,10 @@ function hashQuestion(value) {
   return createHash('sha1').update(value).digest('hex').slice(0, 16);
 }
 
-function buildActions(intent, citations) {
+function buildActions(intent, citations, generatedActions) {
+  if (Array.isArray(generatedActions) && generatedActions.length) {
+    return generatedActions;
+  }
   if (intent !== 'course_recommendation') {
     return [];
   }
@@ -232,7 +378,7 @@ async function handler(event) {
     const answerText = intent === 'course_recommendation'
       ? ensureRecommendationCoverage(result.text, result.citations)
       : result.text;
-    const actions = buildActions(intent, result.citations);
+    const actions = buildActions(intent, result.citations, result.actions);
 
     return response(200, {
       request_id: payload.request_id,

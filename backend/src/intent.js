@@ -3,6 +3,7 @@
 const INTENTS = {
   SITE_NAVIGATION: 'site_navigation',
   COURSE_RECOMMENDATION: 'course_recommendation',
+  COURSE_COMPANION_SETUP: 'course_companion_setup',
   SECTION_EXPLAINER: 'section_explainer',
   PROGRESS_COMPLETION: 'progress_completion',
   GLOSSARY_POLICY: 'glossary_policy',
@@ -11,6 +12,9 @@ const INTENTS = {
 
 function classifyIntent(text) {
   const q = (text || '').toLowerCase();
+  if (q.includes('__course_companion_setup__')) {
+    return INTENTS.COURSE_COMPANION_SETUP;
+  }
   const asksForCourseContents = (
     /(what|which|show|list|tell me).*(activities|activity|modules|module|lessons|lesson|topics|content|contents|covered|inside|include|included)/.test(q) &&
     /(course|programme|program|onboarding|induction|section|week|unit)/.test(q)
@@ -18,6 +22,12 @@ function classifyIntent(text) {
 
   if (/where|find|navigate|menu|click|location|page|tab|settings/.test(q)) {
     return INTENTS.SITE_NAVIGATION;
+  }
+  if (
+    /course companion|notebooklm|setup (my )?(course )?(notes|notebook)|set up (my )?(course )?(notes|notebook)/.test(q)
+    || /start(ing)? (a|my) course/.test(q)
+  ) {
+    return INTENTS.COURSE_COMPANION_SETUP;
   }
   if (
     /what does .* mean|define|definition|glossary|term mean|policy|policies|rule|rules|late submission|submission rule/.test(q)

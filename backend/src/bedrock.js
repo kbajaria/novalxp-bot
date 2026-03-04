@@ -30,6 +30,9 @@ function intentInstruction(intent) {
   if (intent === 'course_recommendation') {
     return 'For course recommendations: always provide 2-3 concrete course suggestions from retrieved context first, each with one short reason. Do not ask a follow-up question unless the user explicitly asks for more options or there are fewer than 2 relevant retrieved items.';
   }
+  if (intent === 'course_companion_setup') {
+    return 'For course companion setup: respond in a 3-step wizard (A/B/C). Step A must open/create Course Notes. Step B must list exactly what to add to NotebookLM. Step C must provide 3 copy-paste prompts tailored to the user course.';
+  }
   if (intent === 'site_navigation') {
     return 'For site navigation: provide exact click-path steps when possible.';
   }

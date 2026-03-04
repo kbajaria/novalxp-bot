@@ -10,13 +10,24 @@ class payload_builder {
     /**
      * @param string $question
      * @param array $history
+     * @param array $contextoverrides
      * @return array
      */
-    public static function build(string $question, array $history = []): array {
+    public static function build(string $question, array $history = [], array $contextoverrides = []): array {
         global $USER, $COURSE, $PAGE;
 
         $question = trim($question);
         $sectionid = optional_param('section', '', PARAM_RAW_TRIMMED);
+
+        $overridecourseid = isset($contextoverrides['course_id']) ? trim((string)$contextoverrides['course_id']) : '';
+        $overridecoursename = isset($contextoverrides['course_name']) ? trim((string)$contextoverrides['course_name']) : '';
+        $overridecoursetitle = isset($contextoverrides['course_title']) ? trim((string)$contextoverrides['course_title']) : '';
+        $overridecurrenturl = isset($contextoverrides['current_url']) ? trim((string)$contextoverrides['current_url']) : '';
+
+        $courseid = $overridecourseid !== '' ? $overridecourseid : (isset($COURSE->id) ? (string)$COURSE->id : '');
+        $coursename = $overridecoursename !== '' ? $overridecoursename : (isset($COURSE->fullname) ? (string)$COURSE->fullname : '');
+        $coursetitle = $overridecoursetitle !== '' ? $overridecoursetitle : $coursename;
+        $currenturl = $overridecurrenturl !== '' ? $overridecurrenturl : $PAGE->url->out(false);
 
         return [
             'request_id' => self::request_id(),
@@ -27,12 +38,14 @@ class payload_builder {
                 'locale' => current_language(),
             ],
             'context' => [
-                'course_id' => isset($COURSE->id) ? (string)$COURSE->id : '',
-                'course_name' => isset($COURSE->fullname) ? (string)$COURSE->fullname : '',
+                'course_id' => $courseid,
+                'course_name' => $coursename,
+                'course_title' => $coursetitle,
                 'section_id' => (string)$sectionid,
                 'section_title' => '',
                 'page_type' => (string)$PAGE->pagetype,
-                'current_url' => $PAGE->url->out(false),
+                'current_url' => $currenturl,
+                'course_companion_template_url' => (string)get_config('local_novalxpbot', 'coursecompaniontemplateurl'),
             ],
             'query' => [
                 'text' => $question,

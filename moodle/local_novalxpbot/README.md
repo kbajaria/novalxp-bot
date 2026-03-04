@@ -4,6 +4,7 @@ Moodle local plugin scaffold that sends chat requests to the NovaLXP backend `/v
 
 ## Included
 - `settings.php` for backend endpoint/API key/timeout config
+- optional Course Companion template URL setting used for setup wizard links
 - `classes/payload_builder.php` to build contract-compliant payloads
 - `classes/service.php` to call backend
 - `classes/response_formatter.php` to normalize response
@@ -25,6 +26,10 @@ Required params:
 - `q` (question text)
 Optional params:
 - `history` (JSON string array of `{role,text}`)
+- `course_id` (optional explicit course context override)
+- `course_name` (optional explicit course context override)
+- `course_title` (optional explicit course title override)
+- `current_url` (optional page URL context)
 
 Response (JSON):
 - `ok` boolean
@@ -33,9 +38,19 @@ Response (JSON):
 - `actions` array of open_url links
 - `meta` model/latency fields
 
-## Dashboard Wiring
-The plugin now auto-loads `local_novalxpbot/chat_client` on Moodle dashboard pages
-(`$PAGE->pagelayout === 'mydashboard'`).
+## Dashboard + Course Wiring
+The plugin auto-loads `local_novalxpbot/chat_client` on:
+- Moodle dashboard pages (`$PAGE->pagelayout === 'mydashboard'`)
+- Course view pages (`/course/view.php`)
+
+On first open per course (per browser), the chat auto-runs a
+`Course Companion Setup` wizard that covers:
+- Step A: create/open Course Notes from template URL (if configured)
+- Step B: what to add to NotebookLM
+- Step C: three tailored copy-paste starter prompts
+
+If exact course title context is unavailable at runtime, starter prompts fall back
+to generic phrasing (`this course`) rather than using unrelated site-level labels.
 
 Add dashboard markup with these data attributes:
 

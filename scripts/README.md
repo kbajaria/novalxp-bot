@@ -5,6 +5,23 @@ Use `node /Users/kamilabajaria/Projects/NovaLXP-Bot/backend/src/smoke-test.js` t
 Use `/Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/deploy_moodle_plugin_dev.sh` to deploy the Moodle plugin to a dev EC2 host over SSH + rsync.
 
 You can target any environment by setting `EC2_HOST` to `dev-moodle-ec2`, `test-moodle-ec2`, or `prod-moodle-ec2`.
+
+## Set Course Companion Template URL
+
+Set Moodle plugin setting `local_novalxpbot/coursecompaniontemplateurl` and purge caches:
+
+```bash
+TEMPLATE_URL="https://docs.google.com/document/d/<doc-id>/copy" \
+SSH_TARGET=dev-moodle-ec2 \
+/Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/set_course_companion_template.sh
+```
+
+Switch target:
+
+```bash
+SSH_TARGET=test-moodle-ec2 /Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/set_course_companion_template.sh
+SSH_TARGET=prod-moodle-ec2 /Users/kamilabajaria/Projects/NovaLXP-Bot/scripts/set_course_companion_template.sh
+```
 ## Manual FAQ Corpus Refresh (Remote)
 
 Regenerates FAQ docs from anonymized backend chat logs on a remote host:

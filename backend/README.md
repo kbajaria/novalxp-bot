@@ -25,7 +25,18 @@ Lambda-style `/v1/chat` orchestrator implementation.
 - `RETRIEVAL_MOODLE_TOKEN` (Moodle web service token for retrieval functions)
 - `RETRIEVAL_MOODLE_FORWARDED_HOST` (optional host header for loopback proxy setups, example `dev.novalxp.co.uk`)
 - `RETRIEVAL_MOODLE_TIMEOUT_MS` (default `15000`)
- - `RECOMMEND_BY_DEPARTMENT` (`true`/`false`, default `true`; applies user `department` boost during `course_recommendation`)
+- `RECOMMEND_BY_DEPARTMENT` (`true`/`false`, default `true`; applies user `department` boost during `course_recommendation`)
+- `COURSE_COMPANION_TEMPLATE_URL` (optional Google Docs template URL used in `course_companion_setup` wizard responses)
+
+## Course Companion Setup Notes
+
+- Intent: `course_companion_setup`
+- Response style: deterministic wizard (Step A/B/C) with action links.
+- Subject selection priority for starter prompts:
+  1. `context.course_title`
+  2. `context.course_name`
+  3. top retrieval citation title
+  4. fallback `this course`
   - Recommended Moodle WS functions for ranking: `core_course_get_courses`, `core_course_search_courses`, `core_course_get_contents`, `core_enrol_get_users_courses`, `core_completion_get_course_completion_status`, `core_completion_get_activities_completion_status` (optional but recommended), `mod_glossary_get_glossaries_by_courses` (optional), `mod_glossary_get_entries_by_search` or `mod_glossary_get_entries_by_letter` (optional)
   - When `RETRIEVAL_PROVIDER=moodle_ws`, `RETRIEVAL_CORPUS_PATH` is ignored.
 

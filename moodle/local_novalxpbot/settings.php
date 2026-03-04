@@ -26,6 +26,14 @@ if ($hassiteconfig) {
     ));
 
     $settings->add(new admin_setting_configtext(
+        'local_novalxpbot/coursecompaniontemplateurl',
+        get_string('coursecompaniontemplateurl', 'local_novalxpbot'),
+        get_string('coursecompaniontemplateurl_desc', 'local_novalxpbot'),
+        '',
+        PARAM_URL
+    ));
+
+    $settings->add(new admin_setting_configtext(
         'local_novalxpbot/requesttimeout',
         get_string('requesttimeout', 'local_novalxpbot'),
         get_string('requesttimeout_desc', 'local_novalxpbot'),

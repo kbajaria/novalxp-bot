@@ -10,9 +10,10 @@ class service {
     /**
      * @param string $question
      * @param array $history
+     * @param array $contextoverrides
      * @return array
      */
-    public static function chat(string $question, array $history = []): array {
+    public static function chat(string $question, array $history = [], array $contextoverrides = []): array {
         $endpoint = (string)get_config('local_novalxpbot', 'backendendpoint');
         $apikey = (string)get_config('local_novalxpbot', 'backendapikey');
         $timeout = (int)get_config('local_novalxpbot', 'requesttimeout');
@@ -25,7 +26,7 @@ class service {
             ];
         }
 
-        $payload = payload_builder::build($question, $history);
+        $payload = payload_builder::build($question, $history, $contextoverrides);
         $backendresponse = client::post_chat($endpoint, $apikey, $payload, max(5, $timeout));
         return response_formatter::format($backendresponse);
     }
