@@ -1,6 +1,6 @@
 # NovaLXP Bot API Contract (Moodle 5.1)
 
-Last updated: 2026-02-21  
+Last updated: 2026-03-04  
 Target AWS region: `eu-west-2`
 
 ## Purpose
@@ -101,21 +101,23 @@ Define the request/response contract between Moodle (NovaLXP plugin/block) and t
 - `site_navigation`
 - `course_recommendation`
 - `course_companion_setup`
-- `section_explainer`
 - `other`
+
+Note: `section_explainer` is currently not a supported production behavior because
+course-context concept explanation has not been reliable. Do not document or
+promise "explain this section/concept in my current course" flows to learners.
 
 ## Routing Policy (Initial)
 - `site_navigation` -> `amazon.nova-lite-v1:0`
 - `course_recommendation` -> `amazon.nova-pro-v1:0`
-- `section_explainer` -> `amazon.nova-pro-v1:0`
 - Fallback on timeout/model error -> `us.anthropic.claude-haiku-4-5-20251001-v1:0` (if available in `eu-west-2` account policy)
 
 Note: if the account requires inference profile IDs, use the corresponding `eu-west-2`-valid profile ID in `model_id`.
 
 ## Retrieval and Citation Rules
-- All responses must be retrieval-grounded for recommendation/explainer intents.
+- All responses must be retrieval-grounded for recommendation intents.
 - If fewer than 2 relevant chunks are retrieved, respond with a clarifying question.
-- Recommendation/explainer answers must include at least 1 citation.
+- Recommendation answers must include at least 1 citation.
 - Citations must point to Moodle/catalog content only.
 - Retrieval source options currently supported in backend config: `local`, `catalog_api`, `moodle_ws` (`opensearch` placeholder).
 

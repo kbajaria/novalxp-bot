@@ -56,7 +56,7 @@ aws bedrock-runtime invoke-model \
 |---|---|---|---|---|
 | site_navigation | amazon.nova-lite-v1:0 | us.anthropic.claude-haiku-4-5-20251001-v1:0 | TBD | Validate converse call in eu-west-2 |
 | course_recommendation | amazon.nova-pro-v1:0 | us.anthropic.claude-haiku-4-5-20251001-v1:0 | Yes | Verified via backend smoke test on 2026-02-21 |
-| section_explainer | amazon.nova-pro-v1:0 | us.anthropic.claude-haiku-4-5-20251001-v1:0 | TBD | Validate converse call in eu-west-2 |
+| section_explainer | N/A (not in supported prod scope) | N/A | N/A | Course-context concept explanation is currently unreliable; do not promise this behavior |
 | embeddings | amazon.titan-embed-text-v2:0 | N/A | TBD | Verify output shape + dimensions |
 
 ## Go-Live Rule

@@ -52,6 +52,11 @@ On first open per course (per browser), the chat auto-runs a
 If exact course title context is unavailable at runtime, starter prompts fall back
 to generic phrasing (`this course`) rather than using unrelated site-level labels.
 
+## Current Product Scope (Important)
+- Supported: `course_companion_setup`, course recommendations, and navigation help.
+- Not currently supported/reliable: asking the bot to explain specific concepts or
+  sections from the current course context.
+
 Add dashboard markup with these data attributes:
 
 ```html

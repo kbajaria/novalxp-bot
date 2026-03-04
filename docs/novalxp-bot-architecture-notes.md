@@ -1,12 +1,12 @@
 # NovaLXP Bot Architecture Notes (Moodle 5.1)
 
-Last updated: 2026-02-21
+Last updated: 2026-03-04
 
 ## Goal
 Replace the current Asyntai integration with a new AWS-based assistant that improves:
 - Course recommendations
 - Site navigation help
-- Section-level explanations
+- Guided Course Companion setup
 
 ## Confirmed AWS Access (validated by CLI tests)
 - Target deployment region: `eu-west-2` (London)
@@ -34,18 +34,21 @@ The following were validated earlier in `us-east-1` and should be re-validated i
 ## Intent Design
 - `site_navigation`
 - `course_recommendation`
-- `section_explainer`
+- `course_companion_setup`
 - `other`
+
+Known limitation: section/concept explanation in current course context is not
+reliable enough for production and is not part of the supported learner promise.
 
 ## Initial Model Routing Policy
 - `site_navigation` -> `amazon.nova-lite-v1:0` (or `us.amazon.nova-lite-v1:0` if inference profiles are required)
 - `course_recommendation` -> `amazon.nova-pro-v1:0` (or `us.amazon.nova-pro-v1:0` if inference profiles are required)
-- `section_explainer` -> `amazon.nova-pro-v1:0` (or `us.amazon.nova-pro-v1:0` if inference profiles are required)
+- `course_companion_setup` -> deterministic server-side flow (no model dependency)
 - Error/timeout fallback -> `us.anthropic.claude-haiku-4-5-20251001-v1:0` (if profile is available in-region policy)
 
 ## Guardrails
 - Retrieval-first responses (no free-form answers without context)
-- Return citations/snippets for recommendations/explanations
+- Return citations/snippets for recommendations
 - Ask clarifying question when confidence is low
 - Store feedback per answer for tuning
 
