@@ -38,9 +38,30 @@ if ($currenturl !== '') {
     $parts = parse_url($currenturl);
     if (!empty($parts['query'])) {
         parse_str($parts['query'], $queryparams);
-        if (!empty($queryparams['id']) && ctype_digit((string)$queryparams['id'])) {
-            $courseidint = (int)$queryparams['id'];
-            $courseid = (string)$courseidint;
+
+        // Only infer course id from URL when explicit course_id is absent.
+        if ($courseidint <= 0) {
+            if (!empty($queryparams['courseid']) && ctype_digit((string)$queryparams['courseid'])) {
+                $courseidint = (int)$queryparams['courseid'];
+                $courseid = (string)$courseidint;
+            } else if (!empty($queryparams['id']) && ctype_digit((string)$queryparams['id'])) {
+                $urlid = (int)$queryparams['id'];
+                $urlpath = !empty($parts['path']) ? (string)$parts['path'] : '';
+                if ($urlpath === '/course/view.php' || strpos($urlpath, '/course/view.php') !== false) {
+                    $courseidint = $urlid;
+                    $courseid = (string)$courseidint;
+                } else if (strpos($urlpath, '/mod/') === 0) {
+                    try {
+                        $cm = get_coursemodule_from_id('', $urlid, 0, false, IGNORE_MISSING);
+                        if (!empty($cm->course)) {
+                            $courseidint = (int)$cm->course;
+                            $courseid = (string)$courseidint;
+                        }
+                    } catch (\Throwable $e) {
+                        // Keep fallback values if cm lookup fails.
+                    }
+                }
+            }
         }
     }
 }
@@ -119,6 +140,12 @@ if ($question === '__course_companion_setup__') {
     exit;
 }
 
+$resolvedquestion = $question;
+if ($courseidint > 0 && trim($coursetitle) !== '') {
+    $resolvedquestion = preg_replace('/\bthis course\b/i', trim($coursetitle), $resolvedquestion);
+    $resolvedquestion = preg_replace('/\bthe course\b/i', trim($coursetitle), $resolvedquestion);
+}
+
 $contextoverrides = [
     'course_id' => (string)$courseid,
     'course_name' => (string)$coursename,
@@ -126,5 +153,11 @@ $contextoverrides = [
     'current_url' => (string)$currenturl,
 ];
 
-$result = \local_novalxpbot\service::chat($question, $history, $contextoverrides);
+$result = \local_novalxpbot\service::chat($resolvedquestion, $history, $contextoverrides);
+
+if (!empty($result['ok']) && !empty($coursetitle) && !empty($result['text']) && is_string($result['text'])) {
+    $escapedtitle = preg_quote(trim($coursetitle), '/');
+    $result['text'] = preg_replace('/\[\s*' . $escapedtitle . '\s*\]/u', trim($coursetitle), $result['text']);
+}
+
 echo json_encode($result, JSON_UNESCAPED_SLASHES);

@@ -101,11 +101,8 @@ Define the request/response contract between Moodle (NovaLXP plugin/block) and t
 - `site_navigation`
 - `course_recommendation`
 - `course_companion_setup`
+- `section_explainer`
 - `other`
-
-Note: `section_explainer` is currently not a supported production behavior because
-course-context concept explanation has not been reliable. Do not document or
-promise "explain this section/concept in my current course" flows to learners.
 
 ## Routing Policy (Initial)
 - `site_navigation` -> `amazon.nova-lite-v1:0`

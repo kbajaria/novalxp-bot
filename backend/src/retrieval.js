@@ -513,11 +513,22 @@ function normalizeCourseFromWs(c) {
   };
 }
 
-async function resolveSectionCourseIds({ config, context, queryText, queryTokens, maxCourses = 2 }) {
+async function resolveSectionCourseIds({
+  config,
+  context,
+  queryText,
+  queryTokens,
+  maxCourses = 2,
+  forceContextCourse = false,
+}) {
   const ids = [];
   const fromContext = context && context.course_id ? Number(context.course_id) : 0;
   if (fromContext > 0) {
     ids.push(fromContext);
+  }
+
+  if (forceContextCourse && ids.length) {
+    return ids.slice(0, 1);
   }
 
   if (ids.length >= maxCourses) {
@@ -752,14 +763,18 @@ async function retrieveFromMoodleWs({ queryText, intent, context, user, topK = 3
   const broadRecommendationQuery = queryTokens.length <= 2
     || /recommend|what next|study next|take next|next course|learning plan/.test(String(queryText || '').toLowerCase());
   const citations = [];
-  const faqCitations = retrieveFaqForIntent({
-    queryText,
-    intent,
-    corpusPath: config.retrievalFaqCorpusPath,
-    topK: Math.min(2, topK),
-  });
-  if (faqCitations.length) {
-    citations.push(...faqCitations);
+  const hasContextCourse = Boolean(context && Number(context.course_id) > 0);
+  const skipFaqForScopedSectionExplainer = intent === 'section_explainer' && hasContextCourse;
+  if (!skipFaqForScopedSectionExplainer) {
+    const faqCitations = retrieveFaqForIntent({
+      queryText,
+      intent,
+      corpusPath: config.retrievalFaqCorpusPath,
+      topK: Math.min(2, topK),
+    });
+    if (faqCitations.length) {
+      citations.push(...faqCitations);
+    }
   }
 
   // 1) Course recommendations / navigation: search courses first.
@@ -814,7 +829,8 @@ async function retrieveFromMoodleWs({ queryText, intent, context, user, topK = 3
       context,
       queryText,
       queryTokens,
-      maxCourses: 2,
+      maxCourses: context && context.course_id ? 1 : 2,
+      forceContextCourse: intent === 'section_explainer' && Boolean(context && context.course_id),
     });
     for (const courseId of courseIds) {
       const sections = await callMoodleWs(config, 'core_course_get_contents', { courseid: courseId });

@@ -18,7 +18,10 @@ function classifyIntent(text) {
   const asksForCourseContents = (
     /(what|which|show|list|tell me).*(activities|activity|modules|module|lessons|lesson|topics|content|contents|covered|inside|include|included)/.test(q) &&
     /(course|programme|program|onboarding|induction|section|week|unit)/.test(q)
-  ) || /(what('s| is)? in (the )?.*(course|programme|program|onboarding|section|week|unit))/.test(q);
+  ) || /(what('s| is)? in (the )?.*(course|programme|program|onboarding|section|week|unit))/.test(q)
+    || /(what (will|can) i learn).*(this|the).*(course|module|lesson|unit)/.test(q)
+    || /(what do i learn).*(this|the).*(course|module|lesson|unit)/.test(q)
+    || /(what is this course about)/.test(q);
 
   if (/where|find|navigate|menu|click|location|page|tab|settings/.test(q)) {
     return INTENTS.SITE_NAVIGATION;

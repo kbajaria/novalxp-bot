@@ -37,8 +37,10 @@ class hook_callbacks {
         $iscourseview = strpos($pagetype, 'course-view') === 0
             || $path === '/course/view.php'
             || strpos($path, '/course/view.php') !== false;
+        $isactivitypage = strpos($pagetype, 'mod-') === 0
+            || strpos($path, '/mod/') === 0;
 
-        if (!$isdashboard && !$iscourseview) {
+        if (!$isdashboard && !$iscourseview && !$isactivitypage) {
             return;
         }
 
@@ -46,8 +48,24 @@ class hook_callbacks {
         $contextcoursename = isset($COURSE->fullname) ? (string)$COURSE->fullname : '';
         $contextcoursetitle = $contextcoursename;
 
-        if ($iscourseview) {
-            $urlcourseid = optional_param('id', 0, PARAM_INT);
+        if ($iscourseview || $isactivitypage) {
+            $urlcourseid = 0;
+            $urlid = optional_param('id', 0, PARAM_INT);
+            $urlcourseidparam = optional_param('courseid', 0, PARAM_INT);
+            if ($urlcourseidparam > 0) {
+                $urlcourseid = $urlcourseidparam;
+            } else if ($iscourseview && $urlid > 0) {
+                $urlcourseid = $urlid;
+            } else if ($isactivitypage && $urlid > 0) {
+                try {
+                    $cm = get_coursemodule_from_id('', $urlid, 0, false, IGNORE_MISSING);
+                    if (!empty($cm->course)) {
+                        $urlcourseid = (int)$cm->course;
+                    }
+                } catch (\Throwable $e) {
+                    // Keep fallback context values if cm lookup fails.
+                }
+            }
 
             if ($urlcourseid > 0) {
                 try {
@@ -65,9 +83,11 @@ class hook_callbacks {
             }
         }
 
+        $hascoursecontext = $contextcourseid > 1;
+
         $PAGE->requires->js_call_amd('local_novalxpbot/chat_client', 'init', [[
-            'autoCourseCompanion' => $iscourseview,
-            'courseId' => $contextcourseid > 0 ? (string)$contextcourseid : '',
+            'autoCourseCompanion' => $iscourseview && $hascoursecontext,
+            'courseId' => $hascoursecontext ? (string)$contextcourseid : '',
             'courseName' => $contextcoursename,
             'courseTitle' => $contextcoursetitle,
         ]]);

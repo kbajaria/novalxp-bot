@@ -580,10 +580,61 @@ define([], function() {
         return '';
     }
 
+    function parsePositiveInt(value) {
+        var text = String(value || '').trim();
+        if (!/^\d+$/.test(text)) {
+            return '';
+        }
+        var numeric = parseInt(text, 10);
+        return numeric > 0 ? String(numeric) : '';
+    }
+
+    function detectCourseIdFromPage() {
+        var fromOptions = '';
+        var queryCourseId = '';
+        var bodyCourseId = '';
+
+        try {
+            var searchParams = new URLSearchParams(window.location.search || '');
+            queryCourseId = parsePositiveInt(searchParams.get('courseid') || searchParams.get('id') || '');
+        } catch (e) {
+            queryCourseId = '';
+        }
+
+        var body = document.body;
+        if (body) {
+            bodyCourseId = parsePositiveInt(
+                body.getAttribute('data-course-id')
+                || body.getAttribute('data-courseid')
+                || body.getAttribute('data-course')
+                || ''
+            );
+
+            if (!bodyCourseId && body.className) {
+                var classMatch = String(body.className).match(/\bcourse-(\d+)\b/i);
+                if (classMatch && classMatch[1]) {
+                    bodyCourseId = parsePositiveInt(classMatch[1]);
+                }
+            }
+        }
+
+        if (queryCourseId && queryCourseId !== '1') {
+            fromOptions = queryCourseId;
+        } else if (bodyCourseId && bodyCourseId !== '1') {
+            fromOptions = bodyCourseId;
+        }
+
+        return fromOptions;
+    }
+
     function buildRequestContext(opts) {
-        var courseId = String((opts && opts.courseId) || '').trim();
+        var courseId = parsePositiveInt((opts && opts.courseId) || '');
+        var detectedCourseId = detectCourseIdFromPage();
         var courseName = String((opts && opts.courseName) || '').trim();
         var courseTitle = String((opts && opts.courseTitle) || '').trim();
+        if (!courseId && detectedCourseId) {
+            courseId = detectedCourseId;
+        }
         if (isGenericCourseName(courseName)) {
             var detected = detectCourseNameFromPage();
             if (detected) {
@@ -641,6 +692,7 @@ define([], function() {
             return;
         }
 
+        var requestContext = buildRequestContext(opts);
         var questionInput = form.querySelector(questionSelector) || form.querySelector('input[type=text]');
         var submitButton = form.querySelector('button[type=submit]');
         var historyInput = form.querySelector(historySelector);
@@ -707,4 +759,3 @@ define([], function() {
         send: send
     };
 });
-        var requestContext = buildRequestContext(opts);

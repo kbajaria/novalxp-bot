@@ -53,9 +53,8 @@ If exact course title context is unavailable at runtime, starter prompts fall ba
 to generic phrasing (`this course`) rather than using unrelated site-level labels.
 
 ## Current Product Scope (Important)
-- Supported: `course_companion_setup`, course recommendations, and navigation help.
-- Not currently supported/reliable: asking the bot to explain specific concepts or
-  sections from the current course context.
+- Supported: `course_companion_setup`, course recommendations, navigation help,
+  and contextual "this course" questions when invoked from a course page.
 
 Add dashboard markup with these data attributes:
 
