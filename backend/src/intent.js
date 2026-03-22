@@ -45,7 +45,7 @@ function classifyIntent(text) {
   if (asksForCourseContents) {
     return INTENTS.SECTION_EXPLAINER;
   }
-  if (/recommend|next course|what next|path|learning plan|study next|onboard|onboarding|induction|starter course|new starter/.test(q)) {
+  if (/recommend|suggest|next course|what next|take next|what (course|training|learning).*take|what should i (do|take|learn|study)|path|learning plan|study next|onboard|onboarding|induction|starter course|new starter/.test(q)) {
     return INTENTS.COURSE_RECOMMENDATION;
   }
   if (/explain|summari[sz]e|what does this mean|section|lesson/.test(q)) {

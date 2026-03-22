@@ -1080,7 +1080,30 @@ async function retrieveFromMoodleWs({ queryText, intent, context, user, topK = 3
       dedup.push(c);
     }
   }
-  return dedup.slice(0, topK);
+
+  // For course recommendations, append up to 3 popular courses from the payload
+  // catalog that are not already in the citation list.
+  if (intent === 'course_recommendation') {
+    const popularCourses = Array.isArray(context && context.catalog && context.catalog.popular_courses)
+      ? context.catalog.popular_courses
+      : [];
+    let added = 0;
+    for (const pc of popularCourses) {
+      if (added >= 3) break;
+      const sourceId = `course_${pc.courseid}`;
+      if (seen.has(sourceId)) continue;
+      seen.add(sourceId);
+      dedup.push({
+        source_id: sourceId,
+        title: String(pc.coursename || 'Course'),
+        url: `/course/view.php?id=${pc.courseid}`,
+        snippet: `Popular course: ${pc.completions} completion${pc.completions !== 1 ? 's' : ''}, ${pc.enrolments} enrolled.`,
+      });
+      added++;
+    }
+  }
+
+  return dedup.slice(0, topK + 3);
 }
 
 async function searchCourses(config, queryText) {
