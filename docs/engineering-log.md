@@ -12,7 +12,7 @@ Used to generate the weekly engineering report. Each entry should be added at th
 ## 2026-03-22 — [Feature] Popular courses injected into course recommendation citations
 
 **Component:** `backend/src/retrieval.js` — `retrieveFromMoodleWs()`
-**Status:** resolved (dev)
+**Status:** released (dev, test, production)
 
 ### What shipped
 For `course_recommendation` intent, the bot now appends up to 3 popular courses from `context.catalog.popular_courses` (sent by Moodle's `payload_builder.php`) to the citation list, after deduplication. Popular courses that are already cited from keyword retrieval are skipped. The model receives up to 6 total citations (3 keyword-matched + 3 popular) and can reference popularity data ("X completions, Y enrolled") in its recommendations.
@@ -24,7 +24,7 @@ For `course_recommendation` intent, the bot now appends up to 3 popular courses 
 ## 2026-03-22 — [Bug] Bot returning clarification request instead of course recommendations
 
 **Component:** `backend/src/intent.js` — `classifyIntent()`
-**Status:** resolved (dev)
+**Status:** released (dev, test, production)
 
 ### Report
 Bot responded "Could you please provide more information about your previous courses or areas of interest?" instead of making course recommendations for queries like "what course should I take next?".
